@@ -104,26 +104,36 @@ contract ExchangeContract {
 
         emit TokensRefunded(buyer, dfaAddress, amount);
     }
+    
+    function fundriseFail() public {
+        require(msg.sender == _owner, "Only owner can call this function");
 
-    function fundriseFail(address dfaAddress) public  {
-        require(msg.sender == _owner);
-        DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
-        require(dfa.threshold() > dfa.totalSold());
-        require(block.timestamp < dfa.salesEndDate());
+        for (uint256 j = 0; j < dfaAddresses.length; j++) {
+            address dfaAddress = dfaAddresses[j];
+            DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
 
-        address[] memory investors = dfa.getInvestors(); 
-        for (uint64 i = 0; i < investors.length; i++) {
-            address investor = investors[i];
-            uint64 balance = dfa.balanceOf(investor);
+            if (dfa.threshold() <= dfa.totalSold() || block.timestamp > dfa.salesEndDate()) {
+                continue;
+            }
 
-            if (balance > 0) {
-                uint64 price = dfa.getPrice();
-                uint64 refundSum = balance * price; 
-                dfa.burn(investor, balance); 
+            address[] memory investors = dfa.getInvestors();
+            if (investors.length == 0) {
+                continue;
+            }
 
-                roubleToken.refund(investor, refundSum, price, balance, dfaAddress);
+            for (uint256 i = 0; i < investors.length; i++) {
+                address investor = investors[i];
+                uint64 balance = dfa.balanceOf(investor);
 
-                emit TokensRefunded(investor, dfaAddress, balance);
+                if (balance > 0) {
+                    uint64 price = dfa.getPrice();
+                    uint64 refundSum = balance * price;
+
+                    dfa.burn(investor, balance);
+                    roubleToken.refund(investor, refundSum, price, balance, dfaAddress);
+
+                    emit TokensRefunded(investor, dfaAddress, balance);
+                }
             }
         }
     }
