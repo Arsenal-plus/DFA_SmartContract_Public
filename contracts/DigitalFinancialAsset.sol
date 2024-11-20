@@ -6,34 +6,37 @@ contract DigitalFinancialAsset {
     string public symbol; 
     uint8 public decimals = 0;
     string public issuer;
-    uint64 public initialSupply; 
-    uint64 public price;
-    uint64 public salesStartDate;
-    uint64 public salesEndDate;
-    uint64 public threshold;
-    uint64 public redeemDate;
+    uint256 public totalSupply; 
+    uint256 public price;
+    uint256 public salesStartDate;
+    uint256 public salesEndDate;
+    uint256 public threshold;
+    uint256 public redeemDate;
     uint16 public annualInterestRate;
-    uint64 public minimalInvestmentAmount;
+    uint256 public minimalInvestmentAmount;
 
-    uint64 public totalRedeemed;
-    uint64 public totalSold;
+    uint256 public totalRedeemed;
+    uint256 public totalSold;
 
     address private _owner;
 
-    mapping(address => uint64) public balances;
+    mapping(address => uint256) public balances;
 
     address[] private investorAddresses; 
 
-    event Transfer(address indexed from, address indexed to, uint64 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
     event DebugOwner(address indexed sender, address indexed owner); 
 
-    constructor(string memory _name, string memory _symbol, string memory _issuer, uint64 _initialSupply,
-    uint64 _price, uint64 _salesStartDate, uint64 _salesEndDate, uint64 _threshold, uint64 _redeemDate,
-    uint16 _annualInterestRate, uint64 _minimalInvestmentAmount) {
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    mapping(address => mapping(address => uint256)) private allowances;
+
+    constructor(string memory _name, string memory _symbol, string memory _issuer, uint256 _totalSupply,
+    uint256 _price, uint256 _salesStartDate, uint256 _salesEndDate, uint256 _threshold, uint256 _redeemDate,
+    uint16 _annualInterestRate, uint256 _minimalInvestmentAmount) {
         name = _name;
         symbol = _symbol;
         issuer = _issuer;
-        initialSupply = _initialSupply;
+        totalSupply = _totalSupply;
         price = _price;
         salesStartDate = _salesStartDate;
         salesEndDate = _salesEndDate;
@@ -43,12 +46,8 @@ contract DigitalFinancialAsset {
         minimalInvestmentAmount = _minimalInvestmentAmount;
 
         _owner = msg.sender;
-        balances[msg.sender] = initialSupply; 
-        emit Transfer(address(0), msg.sender, initialSupply);
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return uint256(initialSupply);
+        balances[msg.sender] = totalSupply; 
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 
     function transfer(address, uint256) public pure returns (bool) {
@@ -71,19 +70,19 @@ contract DigitalFinancialAsset {
         return _owner;
     }
 
-    function balanceOf(address account) public view returns (uint64) {
+    function balanceOf(address account) public view returns (uint256) {
         return balances[account];
     }
 
-    function getReserve() public view returns (uint64) {
+    function getReserve() public view returns (uint256) {
         return balances[_owner];
     }
 
-    function getPrice() public view returns (uint64) {
+    function getPrice() public view returns (uint256) {
         return price;
     }
 
-    function getTotalSold() public view returns (uint64) {
+    function getTotalSold() public view returns (uint256) {
         return totalSold;
     }
 
@@ -95,7 +94,7 @@ contract DigitalFinancialAsset {
         return block.timestamp >= redeemDate;
     }
 
-    function buy(address account, uint64 amount) public  {
+    function buy(address account, uint256 amount) public  {
         require(msg.sender == _owner, "Only the owner can transfer tokens");
         require(balances[_owner] >= amount, "Not enough tokens in the bank");
         require(salesStartDate <= block.timestamp && block.timestamp <= salesEndDate, "The asset is not available for buying");
@@ -111,7 +110,7 @@ contract DigitalFinancialAsset {
         emit Transfer(_owner, account, amount);
     }
 
-    function takeBack(address account, uint64 amount) public returns (uint64) {
+    function takeBack(address account, uint256 amount) public returns (uint256) {
         require(msg.sender == _owner, "Only the owner can transfer tokens");
         require(balances[account] >= amount, "Not enough tokens at the address");
         require(block.timestamp < salesEndDate, "Too late to recall");
@@ -120,23 +119,23 @@ contract DigitalFinancialAsset {
         balances[_owner] += amount;
         totalSold -= amount;
 
-        emit Transfer(_owner, account, amount);
+        emit Transfer(account, _owner, amount);
         return balanceOf(account);
     }
 
     function getInvestors() public view returns (address[] memory) {
-        uint64 count = 0;
+        uint256 count = 0;
 
-        for (uint64 i = 0; i < investorAddresses.length; i++) {
+        for (uint256 i = 0; i < investorAddresses.length; i++) {
             if (balances[investorAddresses[i]] > 0) {
                 count++;
             }
         }
 
         address[] memory activeInvestors = new address[](count);
-        uint64 index = 0;
+        uint256 index = 0;
 
-        for (uint64 i = 0; i < investorAddresses.length; i++) {
+        for (uint256 i = 0; i < investorAddresses.length; i++) {
             if (balances[investorAddresses[i]] > 0) {
                 activeInvestors[index] = investorAddresses[i];
                 index++;
@@ -146,7 +145,7 @@ contract DigitalFinancialAsset {
         return activeInvestors;
     }
 
-    function burn(address account, uint64 amount) public  {
+    function burn(address account, uint256 amount) public  {
         require(msg.sender == _owner, "Only the owner can burn tokens");
         require(balances[account] >= amount, "Burn amount exceeds balance");
 
@@ -163,7 +162,7 @@ contract DigitalFinancialAsset {
        
         emit DebugOwner(msg.sender, _owner); // Логирование владельца контракта
 
-        uint64 balance = balances[oldAddress];
+        uint256 balance = balances[oldAddress];
         require(balance > 0, "Old address has no tokens");
 
         balances[oldAddress] = 0;
@@ -172,17 +171,17 @@ contract DigitalFinancialAsset {
         emit Transfer(oldAddress, newAddress, balance);
     }
 
-    function setBalance(address account, uint64 amount) public {
+    function setBalance(address account, uint256 amount) public {
         require(msg.sender == _owner, "Permission denied");
         balances[account] = amount;
     }
 
-    function increaseBalance(address account, uint64 amount) public {
+    function increaseBalance(address account, uint256 amount) public {
         require(msg.sender == _owner, "Permission denied");
         balances[account] += amount;
     }
 
-    function decreaseBalance(address account, uint64 amount) public {
+    function decreaseBalance(address account, uint256 amount) public {
         require(msg.sender == _owner, "Permission denied");
         require(balances[account] >= amount, "Insufficient balance");
         balances[account] -= amount;
