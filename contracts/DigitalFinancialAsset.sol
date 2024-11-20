@@ -18,7 +18,6 @@ contract DigitalFinancialAsset {
     uint64 public totalRedeemed;
     uint64 public totalSold;
 
-
     address private _owner;
 
     mapping(address => uint64) public balances;
@@ -46,14 +45,6 @@ contract DigitalFinancialAsset {
         _owner = msg.sender;
         balances[msg.sender] = initialSupply; 
         emit Transfer(address(0), msg.sender, initialSupply);
-    }
-
-    function balanceOf(address account) public view returns (uint256) {
-        return uint256(balances[account]);
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return uint256(initialSupply);
     }
 
     function totalSupply() public view returns (uint256) {
