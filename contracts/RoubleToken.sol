@@ -4,6 +4,10 @@ pragma solidity ^0.8.28;
 contract RoubleToken{
     string public name = "Russian Rouble";
     string public symbol = "RUB";
+    uint8 public decimals = 0;
+    uint64 private totalSupply;
+
+    mapping(address => mapping(address => uint256)) private allowances;
 
     address private _owner;
 
@@ -82,6 +86,8 @@ contract RoubleToken{
 
         balances[to] += amount;
 
+        totalSupply += amount;
+
         payments[to].push (Payment(
             amount, invoiceId, 
             block.timestamp
@@ -96,6 +102,8 @@ contract RoubleToken{
         
         balances[from] -= sum;
 
+        totalSupply -= sum;
+
         purchases[from].push(
             Purchase(sum,price,amount,tokenAddress, block.timestamp)
             );
@@ -107,6 +115,7 @@ contract RoubleToken{
         require(msg.sender == _owner, "Only the owner can make transes");
 
         balances[to] += sum;
+        totalSupply +=sum;
 
         refunds[to].push(Refund(
             sum,
@@ -125,6 +134,7 @@ contract RoubleToken{
         require(!withdrawalExists(from, invoiceId), "Withdrawal already exists");
 
         balances[from] -= amount;
+        totalSupply -= amount;
 
         withdrawals[from].push(Withdrawal(
             amount,
@@ -145,7 +155,7 @@ contract RoubleToken{
         uint64 totalInterest = (sum * term * annualRate) / (365 * 24 * 60 * 60 * 100);
         
         balances[account] += totalInterest;
-
+        totalSupply += totalInterest;
         interestAccruals[account].push(InterestAccrual(totalInterest, annualRate, sum, tokenAddress, block.timestamp));
 
         emit InterestAccruals(account, totalInterest, annualRate, tokenAddress);
@@ -157,7 +167,7 @@ contract RoubleToken{
         uint64 sum = nominalPrice * tokensAmount;
 
         balances[account] += sum;
-
+        totalSupply += sum;
         redeems[account].push(Redeem(sum, nominalPrice, tokensAmount, tokenAddress, block.timestamp));
 
         emit RedeemPayment(account, nominalPrice, tokensAmount, tokenAddress);
@@ -249,5 +259,21 @@ contract RoubleToken{
         }
     }
     return false; 
+    }
+
+    function transfer(address, uint256) public pure returns (bool) {
+        revert("Transfer not supported");
+    }
+
+    function approve(address, uint256) public pure returns (bool) {
+        revert("Approve not supported");
+    }
+
+    function transferFrom(address, address, uint256) public pure returns (bool) {
+        revert("TransferFrom not supported");
+    }
+
+    function allowance(address, address) public pure returns (uint256) {
+        return 0;
     }
 }

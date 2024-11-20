@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 contract DigitalFinancialAsset {
     string public name; 
     string public symbol; 
+    uint8 public decimals = 0;
     string public issuer;
     uint64 public initialSupply; 
     uint64 public price;
@@ -16,6 +17,7 @@ contract DigitalFinancialAsset {
 
     uint64 public totalRedeemed;
     uint64 public totalSold;
+
 
     address private _owner;
 
@@ -44,6 +46,34 @@ contract DigitalFinancialAsset {
         _owner = msg.sender;
         balances[msg.sender] = initialSupply; 
         emit Transfer(address(0), msg.sender, initialSupply);
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return uint256(balances[account]);
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return uint256(initialSupply);
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return uint256(initialSupply);
+    }
+
+    function transfer(address, uint256) public pure returns (bool) {
+        revert("Transfer not supported");
+    }
+
+    function approve(address, uint256) public pure returns (bool) {
+        revert("Approve not supported");
+    }
+
+    function transferFrom(address, address, uint256) public pure returns (bool) {
+        revert("TransferFrom not supported");
+    }
+
+    function allowance(address, address) public pure returns (uint256) {
+        return 0;
     }
 
     function getOwner() public view returns (address) {
