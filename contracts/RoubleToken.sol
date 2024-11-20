@@ -5,64 +5,64 @@ contract RoubleToken{
     string public name = "Russian Rouble";
     string public symbol = "RUB";
     uint8 public decimals = 0;
-    uint64 private totalSupply;
+    uint256 private totalSupply;
 
     mapping(address => mapping(address => uint256)) private allowances;
 
     address private _owner;
 
     struct Payment {
-        uint64 amount;
+        uint256 amount;
         string invoiceId;
         uint timeStamp;
     }
 
     struct Withdrawal {
-        uint64 amount;
+        uint256 amount;
         string invoiceId;
         uint timeStamp;
     }    
     
     struct Purchase {
-        uint64 sum;
-        uint64 price;
-        uint64 amount;
+        uint256 sum;
+        uint256 price;
+        uint256 amount;
         address tokenAddress;
         uint timeStamp;
     }
 
     struct Refund {
-        uint64 sum;
-        uint64 price;
-        uint64 amount;
+        uint256 sum;
+        uint256 price;
+        uint256 amount;
         address tokenAddress;
         uint timeStamp;
     }
 
     struct Redeem{
-        uint64 sum;
-        uint64 nominal;
-        uint64 amount;
+        uint256 sum;
+        uint256 nominal;
+        uint256 amount;
         address tokenAddress;
         uint timeStamp;
     }
 
     struct InterestAccrual{
-        uint64 sum;
-        uint64 rate;
-        uint64 base;
+        uint256 sum;
+        uint256 rate;
+        uint256 base;
         address tokenAddress;
         uint timeStamp;
     }
 
-    event TokensMinted(address indexed to, uint64 amount, string paymentReference);
-    event TokensWithdrawn(address indexed from, uint64 amount, string withdrawalReference);
-    event Purchases(address indexed from, uint64 sum, uint64 price, uint64 amount, address indexed tokenAddress);
-    event TokensRefunded(address indexed to, uint64 sum, uint64 price, uint64 tokensAmount, address indexed tokenAddress);
-    event InterestAccruals(address indexed account, uint64 amount, uint64 rate, address indexed tokenAddress);
-    event RedeemPayment(address account, uint64 nominalPrice, uint64 tokensAmount, address tokenAddress);
+    event TokensMinted(address indexed to, uint256 amount, string paymentReference);
+    event TokensWithdrawn(address indexed from, uint256 amount, string withdrawalReference);
+    event Purchases(address indexed from, uint256 sum, uint256 price, uint256 amount, address indexed tokenAddress);
+    event TokensRefunded(address indexed to, uint256 sum, uint256 price, uint256 tokensAmount, address indexed tokenAddress);
+    event InterestAccruals(address indexed account, uint256 amount, uint256 rate, address indexed tokenAddress);
+    event RedeemPayment(address account, uint256 nominalPrice, uint256 tokensAmount, address tokenAddress);
 
-    mapping(address => uint64) private balances;
+    mapping(address => uint256) private balances;
 
     mapping(address => Payment[]) private payments;
 
@@ -80,7 +80,7 @@ contract RoubleToken{
         _owner = msg.sender;
     }
 
-    function mint(address to, uint64 amount, string memory invoiceId) public {
+    function mint(address to, uint256 amount, string memory invoiceId) public {
         require(msg.sender == _owner, "Only the owner can make transes");
         require(!paymentExists(to, invoiceId), "Payment already exists");
 
@@ -96,7 +96,7 @@ contract RoubleToken{
         emit TokensMinted(to, amount, invoiceId);
     }
 
-    function purchase(address from, uint64 sum, uint64 price, uint64 amount, address tokenAddress) public {
+    function purchase(address from, uint256 sum, uint256 price, uint256 amount, address tokenAddress) public {
         require(msg.sender == _owner, "Only the owner can make transes");
         require(balanceOf(from) >= sum, "Not enough tokens to purchase");
         
@@ -111,7 +111,7 @@ contract RoubleToken{
         emit Purchases(from, sum, price, amount, tokenAddress);
     }
 
-    function refund(address to, uint64 sum, uint64 price, uint64 amount, address tokenAddress) public  {
+    function refund(address to, uint256 sum, uint256 price, uint256 amount, address tokenAddress) public  {
         require(msg.sender == _owner, "Only the owner can make transes");
 
         balances[to] += sum;
@@ -128,7 +128,7 @@ contract RoubleToken{
         emit TokensRefunded(to, sum, price, amount, tokenAddress);
     }
 
-    function withdraw(address from, uint64 amount, string memory invoiceId) public {
+    function withdraw(address from, uint256 amount, string memory invoiceId) public {
         require(msg.sender == _owner, "Only the owner can make transes");
         require(balanceOf(from) >= amount, "Insufficient balance to withdraw");
         require(!withdrawalExists(from, invoiceId), "Withdrawal already exists");
@@ -145,14 +145,14 @@ contract RoubleToken{
         emit TokensWithdrawn(from, amount, invoiceId);
     }
 
-    function interestAccrual(uint64 sum, uint64 term, uint64 annualRate, address account, address tokenAddress) public  {
+    function interestAccrual(uint256 sum, uint256 term, uint256 annualRate, address account, address tokenAddress) public  {
         require(msg.sender == _owner, "Only the owner can make transes");
         require(sum > 0, "The sum cannot be equal to 0");
         require(term > 0, "The term cannot be equal to 0");
         require(annualRate > 0, "The rate cannot be equal to 0");
         require(account != address(0), "Account cannot be equal to 0");
 
-        uint64 totalInterest = (sum * term * annualRate) / (365 * 24 * 60 * 60 * 100);
+        uint256 totalInterest = (sum * term * annualRate) / (365 * 24 * 60 * 60 * 100);
         
         balances[account] += totalInterest;
         totalSupply += totalInterest;
@@ -161,10 +161,10 @@ contract RoubleToken{
         emit InterestAccruals(account, totalInterest, annualRate, tokenAddress);
     }
 
-    function redeemPayment(uint64 nominalPrice, uint64 tokensAmount, address account, address tokenAddress)public  {
+    function redeemPayment(uint256 nominalPrice, uint256 tokensAmount, address account, address tokenAddress)public  {
         require(msg.sender == _owner, "Only the owner can make transes");
 
-        uint64 sum = nominalPrice * tokensAmount;
+        uint256 sum = nominalPrice * tokensAmount;
 
         balances[account] += sum;
         totalSupply += sum;
@@ -180,7 +180,7 @@ contract RoubleToken{
         require(oldAddress != newAddress, "Addresses must be different");
 
         // Перенос баланса
-        uint64 oldBalance = balances[oldAddress];
+        uint256 oldBalance = balances[oldAddress];
         if (oldBalance > 0) {
             balances[newAddress] = oldBalance;
             balances[oldAddress] = 0;
@@ -227,7 +227,7 @@ contract RoubleToken{
     function getInterestAccurals(address account) external view returns (InterestAccrual[] memory){
         return interestAccruals[account];
     }
-    function balanceOf(address account) public view returns (uint64) {
+    function balanceOf(address account) public view returns (uint256) {
         return balances[account];
     }
 
@@ -242,7 +242,7 @@ contract RoubleToken{
     function paymentExists(address to, string memory invoiceId) internal view returns (bool) {
     Payment[] storage userPayments = payments[to];
 
-    for (uint64 i = 0; i < userPayments.length; i++) {
+    for (uint256 i = 0; i < userPayments.length; i++) {
         if (keccak256(abi.encodePacked(userPayments[i].invoiceId)) == keccak256(abi.encodePacked(invoiceId))) {
             return true; 
         }
@@ -253,7 +253,7 @@ contract RoubleToken{
     function withdrawalExists(address from, string memory invoiceId) internal view returns (bool) {
     Withdrawal[] storage userWithdrawals = withdrawals[from];
 
-    for (uint64 i = 0; i < userWithdrawals.length; i++) {
+    for (uint256 i = 0; i < userWithdrawals.length; i++) {
         if (keccak256(abi.encodePacked(userWithdrawals[i].invoiceId)) == keccak256(abi.encodePacked(invoiceId))) {
             return true; 
         }

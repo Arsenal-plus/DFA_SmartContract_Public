@@ -9,15 +9,15 @@ contract ExchangeViewer
         string symbol;
         string issuer;
         uint price;
-        uint64 salesStartDate;
-        uint64 salesEndDate;
-        uint64 redeemDate;
+        uint256 salesStartDate;
+        uint256 salesEndDate;
+        uint256 redeemDate;
         uint16 annualInterestRate;
         uint threshold;
         address assetAddress;
         uint totalSold;
         uint minimalInvestmentAmount;
-        uint initialSupply;
+        uint totalSupply;
     }
 
     struct Asset {
@@ -49,7 +49,7 @@ contract ExchangeViewer
                     assetAddress: dfaAddresses[i],
                     totalSold: dfa.getTotalSold(),
                     minimalInvestmentAmount: dfa.minimalInvestmentAmount(),
-                    initialSupply: dfa.initialSupply()
+                    totalSupply: dfa.totalSupply()
                 }),
                 currentReserve: dfa.getReserve()
             });
@@ -86,7 +86,7 @@ contract ExchangeViewer
                         assetAddress: address(dfa),
                         totalSold: dfa.getTotalSold(),
                         minimalInvestmentAmount: dfa.minimalInvestmentAmount(),
-                        initialSupply: dfa.initialSupply()
+                        totalSupply: dfa.totalSupply()
                     }),
 
                 quantity: balance

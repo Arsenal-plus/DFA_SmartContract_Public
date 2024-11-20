@@ -13,11 +13,11 @@ contract ExchangeContract {
     mapping(address => DigitalFinancialAsset) public dfaContracts;
     address[] public dfaAddresses;
 
-    event TokenCreated(address indexed tokenAddress, string name, string symbol, uint64 totalSupply);
-    event TokensBought(address indexed buyer, address indexed dfa, uint64 amount);
-    event TokensRedeemed(address indexed redeemer, address indexed dfa, uint64 amount);
-    event TokensRefunded(address indexed refundedAddress, address indexed dfa, uint64 amount);
-    event Transfer (address indexed from, address indexed to, uint64 amount);
+    event TokenCreated(address indexed tokenAddress, string name, string symbol, uint256 totalSupply);
+    event TokensBought(address indexed buyer, address indexed dfa, uint256 amount);
+    event TokensRedeemed(address indexed redeemer, address indexed dfa, uint256 amount);
+    event TokensRefunded(address indexed refundedAddress, address indexed dfa, uint256 amount);
+    event Transfer (address indexed from, address indexed to, uint256 amount);
 
     constructor() {
         _owner = msg.sender;
@@ -31,7 +31,7 @@ contract ExchangeContract {
 
     function getPortfolio(address account) external view returns (ExchangeViewer.Asset[] memory) {
         DigitalFinancialAsset[] memory allDfas = new DigitalFinancialAsset[](dfaAddresses.length);
-        for (uint64 i = 0; i < allDfas.length; i++)
+        for (uint256 i = 0; i < allDfas.length; i++)
         {
             allDfas[i] = dfaContracts[dfaAddresses[i]];
         }
@@ -39,7 +39,7 @@ contract ExchangeContract {
         return exchangeViewer.getPortfolio(account, allDfas);
     }
 
-    function mintRoubles(address to, uint64 amount, string memory paymentReference) public   {
+    function mintRoubles(address to, uint256 amount, string memory paymentReference) public   {
         require(msg.sender == _owner);
         roubleToken.mint(to, amount, paymentReference);
     }
@@ -48,34 +48,34 @@ contract ExchangeContract {
         return roubleToken.balanceOf(account);
     }
 
-    function withdrawRoubles(uint64 amount, address from, string memory withdrawReference)public {
+    function withdrawRoubles(uint256 amount, address from, string memory withdrawReference)public {
         require(msg.sender == _owner);
         roubleToken.withdraw(from, amount, withdrawReference);
     }
 
-    function createDFA(string memory _name, string memory _symbol, string memory _issuer, uint64 _initialSupply,
-    uint64 _price, uint64 _salesStartDate, uint64 _salesEndDate, uint64 _threshold, uint64 _redeemDate,
-    uint16 _annualInterestRate, uint64 _minimalInvestmentAmount) public  returns (address) {
+    function createDFA(string memory _name, string memory _symbol, string memory _issuer, uint256 _totalSupply,
+    uint256 _price, uint256 _salesStartDate, uint256 _salesEndDate, uint256 _threshold, uint256 _redeemDate,
+    uint16 _annualInterestRate, uint256 _minimalInvestmentAmount) public  returns (address) {
         require(msg.sender == _owner);
         require(_redeemDate > _salesEndDate);
-        DigitalFinancialAsset dfa = new DigitalFinancialAsset(_name, _symbol, _issuer, _initialSupply,
+        DigitalFinancialAsset dfa = new DigitalFinancialAsset(_name, _symbol, _issuer, _totalSupply,
             _price, _salesStartDate, _salesEndDate, _threshold, _redeemDate, _annualInterestRate, _minimalInvestmentAmount);
         address dfaAddress = address(dfa);
 
         dfaContracts[dfaAddress] = dfa;
         dfaAddresses.push(dfaAddress);
 
-        emit TokenCreated(dfaAddress, _name, _symbol, _initialSupply);
+        emit TokenCreated(dfaAddress, _name, _symbol, _totalSupply);
         return dfaAddress;
     }
 
-    function buyDFA(address buyer, address dfaAddress, uint64 amount) public {
+    function buyDFA(address buyer, address dfaAddress, uint256 amount) public {
         require(msg.sender == _owner);
         DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
         require(dfa.getReserve() >= amount);
         require(dfa.salesOpened());
 
-        uint64 sum = amount * dfa.getPrice();
+        uint256 sum = amount * dfa.getPrice();
         require(roubleToken.balanceOf(buyer) >= sum);
 
         roubleToken.purchase(buyer, sum, dfa.getPrice(), amount, dfaAddress);
@@ -84,13 +84,13 @@ contract ExchangeContract {
         emit TokensBought(buyer, dfaAddress, amount);
     }
 
-    function getDfaReserve(address dfaAddress) external view returns (uint64) {
+    function getDfaReserve(address dfaAddress) external view returns (uint256) {
         DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
 
         return dfa.getReserve();
     }
 
-    function refundDFA(address buyer, address dfaAddress, uint64 amount) public  {
+    function refundDFA(address buyer, address dfaAddress, uint256 amount) public  {
         require(msg.sender == _owner);
         DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
         require(dfa.balanceOf(buyer) >= amount);
@@ -98,7 +98,7 @@ contract ExchangeContract {
 
         dfa.takeBack(buyer, amount);
 
-        uint64 sum = dfa.getPrice() * amount;
+        uint256 sum = dfa.getPrice() * amount;
 
         roubleToken.refund(buyer, sum, dfa.getPrice(), amount, dfaAddress);
 
@@ -123,11 +123,11 @@ contract ExchangeContract {
 
             for (uint256 i = 0; i < investors.length; i++) {
                 address investor = investors[i];
-                uint64 balance = dfa.balanceOf(investor);
+                uint256 balance = dfa.balanceOf(investor);
 
                 if (balance > 0) {
-                    uint64 price = dfa.getPrice();
-                    uint64 refundSum = balance * price;
+                    uint256 price = dfa.getPrice();
+                    uint256 refundSum = balance * price;
 
                     dfa.burn(investor, balance);
                     roubleToken.refund(investor, refundSum, price, balance, dfaAddress);
@@ -145,14 +145,14 @@ contract ExchangeContract {
     }
 
     // Погашение токенов DFA
-    function redeemDFA(address investor, address dfaAddress, uint64 amount) external {
+    function redeemDFA(address investor, address dfaAddress, uint256 amount) external {
         require(msg.sender == _owner);
         DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
         require(dfa.balanceOf(investor) >= amount);
         require(dfa.redeemStarted());
 
-        uint64 investmentSum = dfa.price() * amount;
-        uint64 term = dfa.redeemDate() - dfa.salesEndDate();
+        uint256 investmentSum = dfa.price() * amount;
+        uint256 term = dfa.redeemDate() - dfa.salesEndDate();
 
         dfa.burn(investor, amount);
 
@@ -163,11 +163,11 @@ contract ExchangeContract {
         emit TokensRedeemed(investor, dfaAddress, amount);
     }
 
-    function getDFABalance(address dfaAddress, address account) external view returns (uint64) {
+    function getDFABalance(address dfaAddress, address account) external view returns (uint256) {
         return dfaContracts[dfaAddress].balanceOf(account);
     }
 
-    function getTokenTotalSold(address dfaAddress) external view returns (uint64){
+    function getTokenTotalSold(address dfaAddress) external view returns (uint256){
         return dfaContracts[dfaAddress].getTotalSold();
     }
 
@@ -177,9 +177,9 @@ contract ExchangeContract {
 
         roubleToken.recover(from, to);
 
-        for (uint64 i = 0; i < dfaAddresses.length; i++) {
+        for (uint256 i = 0; i < dfaAddresses.length; i++) {
             DigitalFinancialAsset dfa = dfaContracts[dfaAddresses[i]];
-            uint64 dfaBalance = dfa.balances(from);
+            uint256 dfaBalance = dfa.balances(from);
             if (dfaBalance > 0) {
                 dfa.setBalance(from, 0);
                 dfa.increaseBalance(to,dfaBalance);
