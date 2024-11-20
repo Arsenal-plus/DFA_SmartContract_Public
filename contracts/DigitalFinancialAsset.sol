@@ -25,8 +25,6 @@ contract DigitalFinancialAsset {
     address[] private investorAddresses; 
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event DebugOwner(address indexed sender, address indexed owner); 
-
     event Approval(address indexed owner, address indexed spender, uint256 value);
     mapping(address => mapping(address => uint256)) private allowances;
 
@@ -160,8 +158,6 @@ contract DigitalFinancialAsset {
         require(oldAddress != address(0), "Old address is the zero address");
         require(newAddress != address(0), "New address is the zero address");
        
-        emit DebugOwner(msg.sender, _owner); // Логирование владельца контракта
-
         uint256 balance = balances[oldAddress];
         require(balance > 0, "Old address has no tokens");
 

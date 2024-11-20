@@ -62,6 +62,9 @@ contract RoubleToken{
     event InterestAccruals(address indexed account, uint256 amount, uint256 rate, address indexed tokenAddress);
     event RedeemPayment(address account, uint256 nominalPrice, uint256 tokensAmount, address tokenAddress);
 
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
     mapping(address => uint256) private balances;
 
     mapping(address => Payment[]) private payments;
@@ -93,6 +96,8 @@ contract RoubleToken{
             block.timestamp
         ));
 
+        emit Transfer(address(0), to, amount);
+
         emit TokensMinted(to, amount, invoiceId);
     }
 
@@ -107,6 +112,9 @@ contract RoubleToken{
         purchases[from].push(
             Purchase(sum,price,amount,tokenAddress, block.timestamp)
             );
+                
+
+        emit Transfer(from, address(0), amount);
 
         emit Purchases(from, sum, price, amount, tokenAddress);
     }
@@ -125,6 +133,8 @@ contract RoubleToken{
             block.timestamp
         ));
 
+        emit Transfer(address(0), to, amount);
+
         emit TokensRefunded(to, sum, price, amount, tokenAddress);
     }
 
@@ -142,6 +152,8 @@ contract RoubleToken{
             block.timestamp
         ));
 
+        emit Transfer(from, address(0), amount);
+
         emit TokensWithdrawn(from, amount, invoiceId);
     }
 
@@ -158,6 +170,8 @@ contract RoubleToken{
         totalSupply += totalInterest;
         interestAccruals[account].push(InterestAccrual(totalInterest, annualRate, sum, tokenAddress, block.timestamp));
 
+        emit Transfer(address(0), account, totalInterest);
+
         emit InterestAccruals(account, totalInterest, annualRate, tokenAddress);
     }
 
@@ -169,6 +183,8 @@ contract RoubleToken{
         balances[account] += sum;
         totalSupply += sum;
         redeems[account].push(Redeem(sum, nominalPrice, tokensAmount, tokenAddress, block.timestamp));
+
+        emit Transfer(address(0), account, sum);
 
         emit RedeemPayment(account, nominalPrice, tokensAmount, tokenAddress);
     }
