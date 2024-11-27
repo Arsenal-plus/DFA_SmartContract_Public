@@ -112,7 +112,7 @@ contract ExchangeContract {
             address dfaAddress = dfaAddresses[j];
             DigitalFinancialAsset dfa = dfaContracts[dfaAddress];
 
-            if (dfa.threshold() <= dfa.totalSold() || block.timestamp > dfa.salesEndDate()) {
+            if (dfa.threshold() <= dfa.totalSold() || block.timestamp < dfa.salesEndDate()) {
                 continue;
             }
 
